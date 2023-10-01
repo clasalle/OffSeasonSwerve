@@ -219,7 +219,7 @@ public final class Constants {
 			 */
 
 			public static final int angleContinuousCurrentLimit = 25; // amperes
-        	public static final int anglePeakCurrentLimit = 40; // amperes
+        	public static final double anglePeakCurrentLimit = 40; // amperes
 			public static final int anglePeakCurrentDuration = 1000; // Milliseconds
 			public static final boolean angleEnableCurrentLimit = true;
 

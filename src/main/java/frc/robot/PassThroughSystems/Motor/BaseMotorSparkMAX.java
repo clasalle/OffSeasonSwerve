@@ -5,6 +5,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.CANSparkMaxLowLevel.PeriodicFrame;
 import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.SparkMaxAbsoluteEncoder.Type;
+import com.revrobotics.SparkMaxPIDController.AccelStrategy;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.SparkMaxPIDController;
 import frc.robot.Constants;
@@ -17,6 +18,7 @@ import frc.robot.Constants.SwerveChassis.SparkMAXSwerveConfiguration;
  */
 public class BaseMotorSparkMAX implements BaseMotorInterface {
   private CANSparkMax motorSparkMax;
+  private SparkMaxPIDController mSparkMaxPIDController;
 
   public BaseMotorSparkMAX(int CANID) {
       System.out.println("**** Activating SparkMAX NEO CANID:" + CANID);
@@ -95,37 +97,35 @@ public class BaseMotorSparkMAX implements BaseMotorInterface {
         // Disable motor safety so we can use hardware PID
        // motorSparkMax.setSafetyEnabled(false);
 
-        motorSparkMax.configNeutralDeadband(MAXAngle.NeutralDeadband, 30);
+        //motorSparkMax.configNeutralDeadband(MAXAngle.NeutralDeadband, MAXAngle.timeoutMs);
 
-        motorSparkMax.setStatusFramePeriod(StatusFrame.Status_13_Base_PIDF0, MAXAngle.periodMs,  MAXAngle.timeoutMs);
-        motorSparkMax.setStatusFramePeriod(StatusFrame.Status_10_Targets, MAXAngle.periodMs,  MAXAngle.timeoutMs);
+        motorSparkMax.setPeriodicFramePeriod(PeriodicFrame.kStatus0, MAXAngle.periodMs);
+        motorSparkMax.setPeriodicFramePeriod(PeriodicFrame.kStatus0, MAXAngle.periodMs);
 
-        motorSparkMax.configPeakOutputForward(+1.0, MAXAngle.timeoutMs);
-        motorSparkMax.configPeakOutputReverse(-1.0, MAXAngle.timeoutMs);
-        motorSparkMax.configNominalOutputForward(0, MAXAngle.timeoutMs);
-        motorSparkMax.configNominalOutputReverse(0, MAXAngle.timeoutMs);
+        motorSparkMax.setSecondaryCurrentLimit(+1.0, MAXAngle.timeoutMs);
+        motorSparkMax.setSecondaryCurrentLimit(+1.0, MAXAngle.timeoutMs);
+        mSparkMaxPIDController.setSmartMotionMinOutputVelocity(0, MAXAngle.timeoutMs);
 
         /* FPID Gains */
-        motorSparkMax.selectProfileSlot(MAXAngle.SLOT_0, 0);
-        motorSparkMax.config_kP(MAXAngle.SLOT_0, MAXAngle.kP, MAXAngle.timeoutMs);
-        motorSparkMax.config_kI(MAXAngle.SLOT_0, MAXAngle.kI, MAXAngle.timeoutMs);
-        motorSparkMax.config_kD(MAXAngle.SLOT_0, MAXAngle.kD, MAXAngle.timeoutMs);
-        motorSparkMax.config_kF(MAXAngle.SLOT_0, MAXAngle.kF, MAXAngle.timeoutMs);
+        mSparkMaxPIDController.setP(MAXAngle.kP, MAXAngle.SLOT_0);
+        mSparkMaxPIDController.setI(MAXAngle.kI, MAXAngle.SLOT_0);
+        mSparkMaxPIDController.setD(MAXAngle.kD, MAXAngle.SLOT_0);
+        mSparkMaxPIDController.setFF(MAXAngle.kF, MAXAngle.SLOT_0);
 
-        motorSparkMax.config_IntegralZone(MAXAngle.SLOT_0, MAXAngle.Izone,  MAXAngle.timeoutMs);
-        motorSparkMax.configClosedLoopPeakOutput(MAXAngle.SLOT_0, MAXAngle.PeakOutput, MAXAngle.timeoutMs);
-        motorSparkMax.configAllowableClosedloopError(MAXAngle.SLOT_0, MAXAngle.DefaultAcceptableError, MAXAngle.timeoutMs);
+        mSparkMaxPIDController.setIZone(MAXAngle.Izone, MAXAngle.SLOT_0);
+        mSparkMaxPIDController.setOutputRange(0, MAXAngle.PeakOutput, MAXAngle.SLOT_0);
+        mSparkMaxPIDController.setSmartMotionAllowedClosedLoopError(MAXAngle.DefaultAcceptableError, MAXAngle.SLOT_0);
       
-        motorSparkMax.configClosedLoopPeriod(MAXAngle.SLOT_0, MAXAngle.closedLoopPeriod, MAXAngle.timeoutMs);
+        //mSparkMaxPIDController.setClosedLoopPeriod(MAXAngle.closedLoopPeriod);
 
-        motorSparkMax.configMotionAcceleration(MAXAngle.Acceleration,MAXAngle.timeoutMs);
-        motorSparkMax.configMotionCruiseVelocity(MAXAngle.CruiseVelocity,MAXAngle.timeoutMs);
-        motorSparkMax.configMotionSCurveStrength(MAXAngle.Smoothing);
+        mSparkMaxPIDController.setSmartMotionMaxAccel(MAXAngle.Acceleration,MAXAngle.timeoutMs);
+        mSparkMaxPIDController.setSmartMotionMaxVelocity(MAXAngle.CruiseVelocity,MAXAngle.timeoutMs);
+        mSparkMaxPIDController.setSmartMotionAccelStrategy(AccelStrategy.kSCurve, MAXAngle.Smoothing);
     }
 
     // Current limiter configuration for the angle motor
     private void configureCurrentLimiterAngle() {
-        motorSparkMax.configPeakCurrentLimit(SparkMAXSwerveConfiguration.anglePeakCurrentLimit, SparkMAXSwerveConfiguration.configureTimeoutMs);
+        motorSparkMax.setSecondaryCurrentLimit(SparkMAXSwerveConfiguration.anglePeakCurrentLimit, SparkMAXSwerveConfiguration.configureTimeoutMs);
 		motorSparkMax.configPeakCurrentDuration(SparkMAXSwerveConfiguration.anglePeakCurrentDuration, SparkMAXSwerveConfiguration.configureTimeoutMs);
 		motorSparkMax.configContinuousCurrentLimit(SparkMAXSwerveConfiguration.angleContinuousCurrentLimit, SparkMAXSwerveConfiguration.configureTimeoutMs);
 		motorSparkMax.enableCurrentLimit(SparkMAXSwerveConfiguration.angleEnableCurrentLimit); // Honor initial setting
